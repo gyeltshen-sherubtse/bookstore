@@ -5,7 +5,10 @@ const dotenv  =  require('dotenv')
 const session = require('express-session');
 const db = require('./config/db'); 
 const bodyParser = require('body-parser');
+const indexRoutes = require('./routes/index');
 const authRoutes = require('./routes/authRoutes');
+const homeRoutes = require('./routes/homeRoutes'); 
+const profileRoutes = require('./routes/profileRoutes');
 
 //load environment variables
 dotenv.config();
@@ -20,7 +23,10 @@ app.use(session({
     secret: 'gyeltshenMk',
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }
+    cookie: { 
+        secure: false,
+        maxAge: 60 * 60 * 1000 //session expries after 1 hour
+    }
 }));
 
 // Set view engine to EJS
@@ -29,11 +35,14 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/components', express.static(path.join(__dirname, 'views/components')));
 
-// Import routes
-const indexRoutes = require('./routes/index');
+
+// routes
 app.use('/', indexRoutes);
 app.use('/auth', authRoutes);
+app.use('/', homeRoutes); // Add this line
+app.use('/', profileRoutes);
 
 //for db connection
 app.get('/db-test', async (req, res) => {
