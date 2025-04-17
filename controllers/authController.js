@@ -18,6 +18,7 @@ exports.registerUser = async (req, res) => {
 // Login
 exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
+    const adminEmail = process.env.ADMIN_EMAIL;
 
     try {
         const user = await db.oneOrNone('SELECT * FROM users WHERE email = $1', [email]);
@@ -32,7 +33,12 @@ exports.loginUser = async (req, res) => {
         }
 
         req.session.user = { id: user.id, name: user.name, email: user.email };
-        // res.json({ message: 'Login successful', user: req.session.user });
+
+        // Redirect based on role
+        if (user.email === adminEmail) {
+            return res.redirect('/admin/dashboard');
+        }
+
         res.redirect('/home');
 
     } catch (err) {
@@ -40,8 +46,13 @@ exports.loginUser = async (req, res) => {
     }
 };
 
-// Logout
+//logout
 exports.logoutUser = (req, res) => {
-    req.session.destroy();
-    res.json({ message: 'Logged out successfully' });
+    req.session.destroy(err => {
+        if (err) {
+            console.error("Logout Error:", err);
+            return res.status(500).send("Logout failed");
+        }
+        res.redirect('/login');
+    });
 };
